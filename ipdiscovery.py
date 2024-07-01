@@ -7,9 +7,14 @@ import socket, struct
 # Windows only!!!!!
 
 class ip:
-    # Gets hostname and private IP values to be shared across classes
+    # Gets hostname and private IP values to be shared across functions
     hostname = subprocess.check_output("hostname").decode("utf-8").strip()
     privateIP = socket.gethostbyname(hostname)
+
+    # empty lists initialized to hold IP/MAC/hostname information
+    ip_list = []
+    mac_list = []
+    hostname_list = []
 
     def print_self_ip():
         """
@@ -29,14 +34,14 @@ class ip:
     def ip_discovery():
         """
         Gets a list of all IP addresses on the network using the arp command.
-        Reformats the list to include a list of IPs, corresponding MAC address, and hostname.
+        Returns three separate lists, one of IP addresses, one of MAC addresses, and one of hostnames.
         """
 
     # Declares empty lists to store data
-        ip_list = []
-        mac_list = []
-        hostname_list = []
-
+        iplist = ip.ip_list
+        maclist = ip.mac_list
+        hostnamelist = ip.hostname_list
+    
     # Runs arp -a to get initial output, converts to string
         output = subprocess.check_output(("arp", "-a")).decode("utf-8").strip()
 
@@ -58,19 +63,34 @@ class ip:
             i = i[:46].upper()
             # splits list in half, gets two variables (one representing IP, one representing MAC). sends to lists
             ipaddr = i[:23].strip()
-            ip_list.append(ipaddr)
+            iplist.append(ipaddr)
             mac = i[24:45].strip()
-            mac_list.append(mac)
+            maclist.append(mac)
 
             # does nslookup on name
-            # have to add try/catch blocks for "host not found"
-            # only interested in middle value of tuple, will have to trim further
-            name = socket.gethostbyaddr(ipaddr)
-            print(name)
+            try: 
+                # returns first value in the name tuple, the hostname itself
+                name = list(socket.gethostbyaddr(ipaddr)).pop(0)
+                hostnamelist.append(name)
+            # handles "host not found" error by removing current IP/MAC entries
+            except socket.herror:           
+                iplist.remove(ipaddr)
+                maclist.remove(mac)
+                pass
 
+    def print_lists():
+        """
+        Just prints out content of lists.
+        """
+        ip.ip_discovery()
+        print(ip.ip_list)
+        print(ip.mac_list)
+        print(ip.hostname_list)
 
-    # Return some kind of table (?)
-
+    def format_lists():
+        """
+        Convert lists to a table.
+        """
 
 if __name__ == "__main__":
-    ip.ip_discovery()
+    ip.print_lists()
