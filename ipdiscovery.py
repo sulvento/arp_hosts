@@ -1,10 +1,12 @@
 import subprocess
-import os
 from urllib.request import urlopen
 import re as r
-import socket, struct
+import socket
 
-# Windows only!!!!!
+"""
+Expanded (and needlessly complex) arp command, listing hostnames as well as IP + MAC addresses of the devices on the arp table.
+Finished 7/2/24
+"""
 
 class ip:
     # Gets hostname and private IP values to be shared across functions
@@ -16,24 +18,9 @@ class ip:
     mac_list = []
     hostname_list = []
 
-    def print_self_ip():
-        """
-        Provides hostname, public and private IP information for current host.
-        """
-    # Finds hostname
-        print("Hostname: " + ip.hostname)
-
-    # Finds IP address on current network
-        print("Private IP: " + ip.privateIP)
-
-    # Finds public IP of router 
-        d = str(urlopen('http://checkip.dyndns.com/').read())
-        publicIP = r.compile(r'Address: (\d+\.\d+\.\d+\.\d+)').search(d).group(1)
-        print("Public IP: " + publicIP)
-
     def ip_discovery():
         """
-        Gets a list of all IP addresses on the network using the arp command.
+        Gets a list of all IP addresses in arp table.
         Returns three separate lists, one of IP addresses, one of MAC addresses, and one of hostnames.
         """
 
@@ -78,19 +65,29 @@ class ip:
                 maclist.remove(mac)
                 pass
 
-    def print_lists():
-        """
-        Just prints out content of lists.
-        """
-        ip.ip_discovery()
-        print(ip.ip_list)
-        print(ip.mac_list)
-        print(ip.hostname_list)
-
     def format_lists():
         """
-        Convert lists to a table.
+        Convert lists to a table similar to output of the arp command, and outputs it.
         """
+        ip.ip_discovery()
+        
+        # finds max length of each entry in the list for formatting the table
+        max_ip_length = max(len(ip) for ip in ip.ip_list + ["Internet Address"])
+        max_mac_length = max(len(mac) for mac in ip.mac_list + ["Physical Address"])
+        max_hostname_length = max(len(host) for host in ip.hostname_list + ["Hostname"])
 
+        # prepares to format strings based on max length
+        format_string = f"{{:<{max_ip_length}}}  {{:<{max_mac_length}}}  {{:<{max_hostname_length}}}"
+        
+        # prints header
+        header = format_string.format("Internet Address", "Physical Address", "Hostname")
+        print(header)
+
+        # and here's the list!
+        length = len(ip.hostname_list)
+        for i in range(length):
+            print(format_string.format(ip.ip_list[i], ip.mac_list[i], ip.hostname_list[i]))
+
+        
 if __name__ == "__main__":
-    ip.print_lists()
+    ip.format_lists()
